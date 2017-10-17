@@ -1,0 +1,105 @@
+function d2h()                  # decimal to hexa                                                                      
+{
+    echo $(( [#16]$1 ));
+}
+
+function h2d()                  # hexa to decimal                                                                      
+{
+    echo $(( 16#$1 ));
+}
+
+function d2b()                  # decimal to binary                                                                    
+{
+    echo $(( [#2]$1 ));
+}
+
+function h2b()                  # binary to decimal                                                                    
+{
+    echo $(( 2#$1 ));
+}
+
+function h2b()                  # hexa to binary                                                                       
+{
+    echo $(( [#2]16#$1 ));
+}
+
+function b2h()                  # binary to hexa                                                                       
+{
+    echo $(( [#16]2#$1 ));
+}
+
+function cdf() {
+   local file
+   local dir
+   file=$(fzf -q "$1") && dir=$(dirname "$file") && cd "$dir"
+}
+
+function cif() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} d -print 2> /dev/null |
+        fzf -1 --preview="ls -l --color=always  {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && cd "$dir"
+}
+
+function cf() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} \( ! -regex '.*/\..*' \) -type d -print 2> /dev/null |
+        fzf -1 --preview="ls -l --color=always  {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && cd "$dir"
+}
+
+function vif() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} -type f -print 2> /dev/null |
+        fzf -1 --preview="pygmentize -g {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && nvim "$dir"
+}
+
+function vf() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} \( ! -regex '.*/\..*' \) -type f -print 2> /dev/null |
+        fzf -1 --preview="pygmentize -g {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && cat -O $(echo "$dir" | sed ':a;N;$!ba;s/\n/ /g')
+}
+
+
+function lf() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} -type d -print 2> /dev/null |
+        fzf -1 --preview="ls -l --color=always  {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && ls -l "$dir"
+}
+
+function caf() {
+    local dir
+    dir=$(
+        find ${1:-$HOME} -type f -print 2> /dev/null |
+        fzf -1 --preview="pygmentize -g {-1}" --header-lines=1 --ansi --prompt="${1:-$HOME}"
+    ) && pygmentize -g "$dir"
+}
+
+# fbr - checkout git branch
+function fbr() {
+  local branches branch
+  branches=$(git branch -vv) &&
+  branch=$(echo "$branches" | fzf +m) &&
+  git checkout $(echo "$branch" | awk '{print $1}' | sed "s/.* //")
+}
+# fshow - git commit browser
+function fshow() {
+  git log --graph --color=always \
+      --format="%C(auto)%h%d %s %C(black)%C(bold)%cr" "$@" |
+  fzf --ansi --no-sort --reverse --tiebreak=index --bind=ctrl-s:toggle-sort \
+      --bind "ctrl-m:execute:
+                (grep -o '[a-f0-9]\{7\}' | head -1 |
+                xargs -I % sh -c 'git show --color=always % | less -R') << 'FZF-EOF'
+                {}
+FZF-EOF"
+}
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
